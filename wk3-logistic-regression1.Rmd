@@ -1,0 +1,76 @@
+---
+title: "Analytics Edge - Logistic Regression"
+author: "jy"
+date: "July 19, 2016"
+output: html_document
+---
+
+Logistic Regression tutorial from Edx.org course 'Analytics Edge'
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(caTools)
+
+quality <- read.csv("datasets/quality.csv")
+```
+
+The dataset:
+
+```{r, echo=FALSE}
+str(quality)
+```
+
+Split the dataset into training and testing sets.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## split data into training and testing sets
+set.seed(88)
+split <- sample.split(quality$PoorCare,SplitRatio = 0.75)
+#split ## true or false values identifying if should be in training set or not
+
+qualityTrain <- subset(quality,split==TRUE)
+qualityTest <- subset(quality,split==FALSE)
+
+```
+Number of rows in training set:
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+nrow(qualityTrain)
+```
+Number of rows in test set:
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+nrow(qualityTest)
+```
+
+Build a logistic regression model
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qualitylog <- glm(PoorCare ~ OfficeVisits+Narcotics,data=qualityTrain,family=binomial)
+
+```
+Output from model: 
+- estimates should be positive; asterisks indicate significance
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+summary(qualitylog)
+```
+
+Make prediciton on training data: 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## make prediction
+predictTrain <- predict(qualitylog,type="response")
+summary(predictTrain)
+
+```
+
+Check prediction against positive outcomes
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## check predictions vs true outcomes
+tapply(predictTrain,qualityTrain$PoorCare,mean)
+## interpretation:
+## - for all true poor care cases (1), we predict ave. probability of ~0.44
+## - for all true good care cases (0), we predict ave. probability of ~0.19
+## - good because we're predicting higher probabily for actual poor care cases
+```
+
+* Interpretation:
+    + for all true poor care cases (1), we predict ave. probability of ~0.44
+    + for all true good care cases (0), we predict ave. probability of ~0.19
+    + good because we're predicting higher probabily for actual poor care cases
+
