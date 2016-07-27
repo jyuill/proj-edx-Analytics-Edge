@@ -1,0 +1,56 @@
+---
+title: "framingham"
+author: "jy"
+date: "July 27, 2016"
+output: html_document
+---
+### Subject
+Logistical regression using the Farmingham heart disease data set. Data is available in 'datasets' folder.
+
+### Data
+Check out the data structure:
+```{r, echo=FALSE, warning=FALSE}
+framingham <- read.csv("datasets/framingham.csv")
+str(framingham)
+```
+Note that TenYearCHD is the dependent variable, indicating whether or not the subject had Coronary Heart Disease within 10 years of the data being collected.
+
+### Process data for analysis
+Split the data between training and test sets (65\% in training set)
+```{r, warning=FALSE}
+library(caTools)
+set.seed(1000)
+split <- sample.split(framingham$TenYearCHD, SplitRatio=0.65)
+train <- subset(framingham, split==TRUE)
+test <- subset(framingham, split==FALSE)
+```
+### Logistic Regression Model
+Use all independent variables against the dependent variable. (For logistic regression family=binomial)
+```{r, warning=FALSE, message=FALSE}
+framinghamLog <- glm(TenYearCHD ~ ., data=train, family=binomial)
+```
+#### Summary of the model:
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(framinghamLog)
+```
+### Results
+* male, age, prevalentStroke, total cholesterol, systolic blood pressure, glucose are all significant in the model
+* cigarettes per day and prevalent hypertension are somewhat significant
+* coefficients are positive for all these variables, meaning that they contribute to a higher probability of ten year coronary heart disease
+
+### Prediction
+Use the model to make predictions on the test set.(type=response for probabilities)
+```{r, warning=FALSE, message=FALSE}
+predictTest <- predict(framinghamLog, type="response", newdata=test)
+```
+Set a treshold value at 0.5 to create a confusion matrix
+```{r, warning=FALSE, message=FALSE}
+table(test$TenYearCHD, predictTest >0.5)
+```
+* with this threshold, the model predicts an outcome of 1 (TenYearCHD) rarely, indicating that it doesn't find many cases where 10 yr CHD risk is above 50\%
+
+#### Check the accuracy of the model
+```{r}
+(1069+11)/(1069+6+187+11)
+```
+
