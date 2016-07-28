@@ -5,15 +5,16 @@ date: "July 27, 2016"
 output: html_document
 ---
 ### Subject
-Logistical regression using the Farmingham heart disease data set. Data is available in 'datasets' folder.
+Logistical regression using the Farmingham heart disease data set. Data is available in **'datasets'** folder.
 
 ### Data
-Check out the data structure:
+Check out the data structure and get a sample of data:
 ```{r, echo=FALSE, warning=FALSE}
 framingham <- read.csv("datasets/framingham.csv")
 str(framingham)
+head(framingham)
 ```
-Note that TenYearCHD is the dependent variable, indicating whether or not the subject had Coronary Heart Disease within 10 years of the data being collected.
+Note that **TenYearCHD** is the **dependent** variable, indicating whether or not the subject had Coronary Heart Disease within 10 years of the data being collected.
 
 ### Process data for analysis
 Split the data between training and test sets (65\% in training set)
@@ -24,6 +25,7 @@ split <- sample.split(framingham$TenYearCHD, SplitRatio=0.65)
 train <- subset(framingham, split==TRUE)
 test <- subset(framingham, split==FALSE)
 ```
+
 ### Logistic Regression Model
 Use all independent variables against the dependent variable. (For logistic regression family=binomial)
 ```{r, warning=FALSE, message=FALSE}
@@ -49,8 +51,58 @@ table(test$TenYearCHD, predictTest >0.5)
 ```
 * with this threshold, the model predicts an outcome of 1 (TenYearCHD) rarely, indicating that it doesn't find many cases where 10 yr CHD risk is above 50\%
 
-#### Check the accuracy of the model
+#### Check the Accuracy of the model
 ```{r}
 (1069+11)/(1069+6+187+11)
 ```
+Accuracy is high because of the high score with true negatives. True positives not that great.
 
+For comparison, if the model just predicted everybody as negative (not getting 10 yr CHD), accuracy would be:
+```{r}
+(1069+6)/(1069+6+187+11)
+```
+Basically the same as the model! But the model may still be valuable by varying the threshold.
+
+#### Check the Value of the model
+Computer out-of-sample AUC (area under curve)
+```{r, warning=FALSE, message=FALSE}
+library(ROCR)
+ROCRpred <- prediction(predictTest, test$TenYearCHD)
+as.numeric(performance(ROCRpred, "auc")@y.values)
+```
+An AUC of about 74% indicates the model can differentiate between low risk and high risk patients pretty well. 
+
+#### Conclusion
+* the model does not do well at predicting 10-year risk of CHD above 50\% (predicting only 11 of 198 cases)
+* the model does pretty well at differentiating between high risk and low risk patients, with an out-of-sample AUC of 0.74 (not totally sure what this means)
+* also, some of the variables identified as significant suggest possible interventions to reduce risk of CHD
+
+END OF LESSON MODULE
+
+#### Questions
+Does the model do better with lower threshold?
+Set a treshold value at 0.25 to create a confusion matrix
+```{r, warning=FALSE, message=FALSE}
+table(test$TenYearCHD, predictTest >0.25)
+```
+Accuracy:
+```{r}
+(940+74)/(940+135+124+74)
+```
+Lower threshold leads to less accuracy.
+```{r, echo=FALSE}
+fp1 <- 6/(1069+6)
+fn1 <- 187/(187+11)
+fp2 <- (135)/(135+940)
+fn2 <- 124/(124+74)
+p1 <- 11/(11+6)
+p2 <- 74/(135+74)
+```
+* False positive is now: `r fp2` compared to `r fp1`
+* False negative is now: `r fn2` compared to `r fn1`
+
+So the lower threshold is better if you want to err on the side of catching high risk patients, even though you will be wrong in your prediction more than you will be right.
+
+Also, precision is not great:  
+* 25\% threshold: `r p2`  
+* 50\% threshold: `r p1`
