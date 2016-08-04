@@ -1,0 +1,49 @@
+---
+title: "wk4-trees-1-supreme-court"
+author: "jy"
+date: "August 4, 2016"
+output: html_document
+---
+
+### Get the data, set factors
+```{r, echo=FALSE, results='hide'}
+stevens <- read.csv("datasets/stevens.csv",stringsAsFactors = FALSE)
+str(stevens)
+stevens$Circuit <- as.factor(stevens$Circuit)
+stevens$Issue <- as.factor(stevens$Issue)
+stevens$Petitioner <- as.factor(stevens$Petitioner)
+stevens$Respondent <- as.factor(stevens$Respondent)
+stevens$LowerCourt <- as.factor(stevens$LowerCourt)
+#str(stevens)
+```
+
+```{r, echo=FALSE}
+str(stevens)
+```
+includes 9 variables, including:
+* 8 independent variables
+* 1 dependent variable: Reverse (indicating if the Judge reversed lower court)
+
+### Set up training  and test set - 70% of data in training
+```{r, warning=FALSE}
+library(caTools)
+set.seed(3000)
+split <- sample.split(stevens$Reverse, SplitRatio=0.7)
+Train <- subset(stevens, split==TRUE)
+Test <- subset(stevens, split==FALSE)
+```
+
+### Create CART model (Classification and Regression Tree)
+```{r, warning=FALSE}
+library(rpart)
+StevensTree <- rpart(Reverse~Circuit+Issue+Petitioner+Respondent+LowerCourt+Unconst, data=Train, method="class", control=rpart.control(minbucket=25))
+```
+(minbucket=25 to ensure sufficient cases are in each bucket)
+
+### Check out the Decision Tree on the Training Data
+```{r, echo=FALSE, warning=FALSE}
+library(rpart.plot)
+prp(StevensTree)
+```
+  
+Follow the tree branches to determine whether Justice Stevens is likely to have upheld (0) or reversed (1) the lower court decisions in the training data set.
